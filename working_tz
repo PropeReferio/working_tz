@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+
+from argparse import ArgumentParser
+from datetime import datetime, timedelta
+
+from os import environ
+
+UTC_OFFSET_WORK = environ.get("UTC_OFFSET_WORK")
+
+
+def main():
+    parser = ArgumentParser(description="Takes a working and living time zone, and prints the schedule of both.")
+    parser.add_argument("-l",
+                        "--living",
+                        help="The timezone you live in, as an integer representing offset from UTC. For "
+                             "example, CST would be -6.",
+                        required=True,
+                        type=int)
+    parser.add_argument('-w',
+                        '--work',
+                        help="The timezone you work in, as an integer representing offset from UTC. For "
+                             "example, PST would be -8. Defaults to an environment variable, see Readme.",
+                        type=int,
+                        default=UTC_OFFSET_WORK)
+
+    args = parser.parse_args()
+
+    if args.work is None:
+        raise Exception("--work must be specified, or UTC_OFFSET_WORK environment variable must be set.")
+
+    work_start_job_tz = datetime.utcnow().replace(hour=9, minute=0, second=0)
+    work_start_utc = work_start_job_tz - timedelta(hours=args.work)
+    work_start_living_tz = work_start_utc + timedelta(hours=args.living)
+
+    print(
+        f"Company's Hours: {work_start_job_tz.strftime('%H:%M')}"
+        f" - {(work_start_job_tz + timedelta(hours=8)).strftime('%H:%M')}"
+    )
+    print(
+        f"Local Working Hours: {work_start_living_tz.strftime('%H:%M')}"
+        f" - {(work_start_living_tz + timedelta(hours=8)).strftime('%H:%M')}"
+    )
+
+
+main()
